@@ -1,0 +1,36 @@
+name: Build QMK Firmware
+
+on: [push, workflow_dispatch]
+
+permissions:
+  contents: write
+
+jobs:
+  build-official:
+    name: 'Build official QMK Firmware'
+    uses: ./.github/workflows/qmk_userspace_build.yml
+    with:
+      artifact_name: official
+      qmk_repo: qmk/qmk_firmware
+      qmk_ref: master
+      preparation_command: |
+        mv qmk-official.json qmk.json
+
+  build-keychron-max:
+    name: 'Build Keychron Max QMK Firmware'
+    uses: ./.github/workflows/qmk_userspace_build.yml
+    with:
+      artifact_name: keychron-max
+      qmk_repo: Keychron/qmk_firmware
+      qmk_ref: wireless_playground
+      preparation_command: |
+        mv qmk-keychron-max.json qmk.json
+
+  publish:
+    name: 'Publish QMK Firmware'
+    uses: ./.github/workflows/qmk_userspace_publish.yml
+    with:
+      release_name: Latest QMK Firmware
+      release_tag: qmk-firmware-${{ github.run_number }}
+    if: always() && !cancelled()
+    needs: [build-official, build-keychron-max]
